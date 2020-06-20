@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="RealSkybox.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="IniReader">
+      <UniqueIdentifier>{5bb4c1f6-bfd8-48db-94f7-4b7a79a4161f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="IniReader\ini_parser.hpp">
+      <Filter>IniReader</Filter>
+    </ClInclude>
+    <ClInclude Include="IniReader\IniReader.h">
+      <Filter>IniReader</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
