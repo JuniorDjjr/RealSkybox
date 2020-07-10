@@ -88,7 +88,7 @@ bool ReadSettingsFile() {
 	return (read > 0);
 }
 
-static void StoreSkyboxModel()
+static void StoreSkyboxModel() 
 {
 	string fileName = "realskybox/skybox.dff";
 
@@ -209,13 +209,13 @@ void RenderSkybox()
 		oldSkyboxScale.y = skyboxSizeXY * goodDistanceFactor;
 		oldSkyboxScale.z = skyboxSizeZ * goodDistanceFactor;
 
-		newSkyboxScale.x = oldSkyboxScale.x * 1.1f;
-		newSkyboxScale.y = oldSkyboxScale.y * 1.1f;
-		newSkyboxScale.z = oldSkyboxScale.z * 1.1f;
+		newSkyboxScale.x = oldSkyboxScale.x * 1.05f;
+		newSkyboxScale.y = oldSkyboxScale.y * 1.05f;
+		newSkyboxScale.z = oldSkyboxScale.z * 1.05f;
 
-		starsSkyboxScale.x = newSkyboxScale.x * 1.1f;
-		starsSkyboxScale.y = newSkyboxScale.y * 1.1f;
-		starsSkyboxScale.z = newSkyboxScale.z * 1.1f;
+		starsSkyboxScale.x = newSkyboxScale.x * 1.05f;
+		starsSkyboxScale.y = newSkyboxScale.y * 1.05f;
+		starsSkyboxScale.z = newSkyboxScale.z * 1.05f;
 
 		// Get essentials
 		float oldAlpha = (1.0f - CWeather::InterpolationValue) * 255.0f;
@@ -264,15 +264,15 @@ void RenderSkybox()
 		// Process rotation
 		if (CCheat::m_aCheatsActive[0xB]) // fast clock
 		{
-			skyboxes[CWeather::OldWeatherType]->rot += 0.2f * CTimer::ms_fTimeStep;
-			if (newTexIsDifferent) skyboxes[CWeather::NewWeatherType]->rot += (0.2f * 0.8f) * CTimer::ms_fTimeStep;
-			skyboxes[WEATHER_FOR_STARS]->rot += 0.01f * CTimer::ms_fTimeStep;
+			skyboxes[CWeather::OldWeatherType]->rot += 0.1f * (CTimer::ms_fTimeStep * 1.666667f);
+			if (newTexIsDifferent) skyboxes[CWeather::NewWeatherType]->rot += (0.1f * 0.7f) * (CTimer::ms_fTimeStep * 1.666667f);
+			skyboxes[WEATHER_FOR_STARS]->rot += 0.005f * (CTimer::ms_fTimeStep * 1.666667f);
 		}
 		else
 		{
-			skyboxes[CWeather::OldWeatherType]->rot += cloudsRotationSpeed * CTimer::ms_fTimeStep;
-			if (newTexIsDifferent) skyboxes[CWeather::NewWeatherType]->rot += (cloudsRotationSpeed * 0.7f) * CTimer::ms_fTimeStep;
-			skyboxes[WEATHER_FOR_STARS]->rot += starsRotationSpeed * CTimer::ms_fTimeStep;
+			skyboxes[CWeather::OldWeatherType]->rot += (cloudsRotationSpeed * 0.5f) * (CTimer::ms_fTimeStep * 1.666667f);
+			if (newTexIsDifferent) skyboxes[CWeather::NewWeatherType]->rot += (cloudsRotationSpeed * 0.5f * 0.7f) * (CTimer::ms_fTimeStep * 1.666667f);
+			skyboxes[WEATHER_FOR_STARS]->rot += (starsRotationSpeed * 0.5f) * (CTimer::ms_fTimeStep * 1.666667f);
 		}
 		while (skyboxes[CWeather::OldWeatherType]->rot > 360.0f) skyboxes[CWeather::OldWeatherType]->rot -= 360.0f;
 		while (skyboxes[CWeather::NewWeatherType]->rot > 360.0f) skyboxes[CWeather::NewWeatherType]->rot -= 360.0f;
@@ -303,6 +303,10 @@ void RenderSkybox()
 			{
 				sunriseFactor *= cloudsMultSunrise;
 				if (sunHorizonFactor > 0.0f) sunriseFactor += (abs(1.0 - sunHorizonFactor) * (sunHorizonFactor * cloudsCityOrange));
+			}
+			else
+			{
+				sunriseFactor = 0.0f;
 			}
 		}
 
@@ -335,6 +339,8 @@ void RenderSkybox()
 
 			SetFullAmbient();
 			DeActivateDirectional();
+			RpLight *pDirect = *(RpLight **)0xC886EC;
+			pDirect->object.object.flags = 0; // same as DeActivateDirectional(); (trying to fix directional lights SAMP bug)
 			CVisibilityPlugins::RenderAlphaAtomic(skyAtomic, finalAlpha);
 		}
 
@@ -353,6 +359,8 @@ void RenderSkybox()
 
 			SetAmbientColours(&skyboxColor);
 			DeActivateDirectional();
+			RpLight *pDirect = *(RpLight **)0xC886EC;
+			pDirect->object.object.flags = 0; // same as DeActivateDirectional(); (trying to fix directional lights SAMP bug)
 			CVisibilityPlugins::RenderAlphaAtomic(skyAtomic, finalAlpha);
 		}
 
@@ -371,6 +379,8 @@ void RenderSkybox()
 
 			SetAmbientColours(&skyboxColor);
 			DeActivateDirectional();
+			RpLight *pDirect = *(RpLight **)0xC886EC;
+			pDirect->object.object.flags = 0; // same as DeActivateDirectional(); (trying to fix directional lights SAMP bug)
 			CVisibilityPlugins::RenderAlphaAtomic(skyAtomic, finalAlpha);
 		}
 
@@ -387,7 +397,7 @@ public:
     RealSkybox()
 	{
 		lg.open("RealSkybox.SA.log", fstream::out | fstream::trunc);
-		lg << "RealSkybox v1.1.1 by Junior_Djjr - MixMods.com.br" << endl;
+		lg << "RealSkybox v1.2 by Junior_Djjr - MixMods.com.br" << endl;
 		lg.flush();
 
 		Events::initScriptsEvent += []
@@ -483,7 +493,7 @@ public:
 		};
 
 		
-		Events::processScriptsEvent.after += []
+		/*Events::processScriptsEvent.after += []
 		{
 			// hour min
 			if (GetKeyState('H') & 0x8000)
@@ -531,13 +541,13 @@ public:
 			{
 				if (GetKeyState('Y') & 0x8000)
 				{
-					fogDensityDefault += 0.01f * CTimer::ms_fTimeStep;
+					fogDensityDefault += 0.0001f * CTimer::ms_fTimeStep;
 					//if (fogDensityDefault > 1.0f) fogDensityDefault = 1.0f;
 					lg << fogDensityDefault << endl;
 				}
 				if (GetKeyState('N') & 0x8000)
 				{
-					fogDensityDefault -= 0.01f * CTimer::ms_fTimeStep;
+					fogDensityDefault -= 0.0001f * CTimer::ms_fTimeStep;
 					if (fogDensityDefault < 0.0000000f) fogDensityDefault = 0.0000000f;
 					lg << fogDensityDefault << endl;
 				}
@@ -567,7 +577,7 @@ public:
 					lg << testInterp << endl;
 				}
 			}
-		};
+		};*/
         
     }
 } realSkybox;
