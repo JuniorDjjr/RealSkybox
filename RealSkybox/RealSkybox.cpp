@@ -44,6 +44,7 @@ bool changeWeather = true;
 float testInterp = 0.0f;
 bool usingInterp = false;
 bool processedFirst = false;
+float inCityFactor = 0.0f;
 const int WEATHER_FOR_STARS = 20;
 
 RwV3d oldSkyboxScale;
@@ -177,12 +178,13 @@ float cloudsMultSunrise = 2.5f;
 
 void RenderSkybox()
 {
-	if (CGame::currArea == 0 && CWeather::OldWeatherType < eWeatherType::WEATHER_UNDERWATER && CWeather::NewWeatherType < eWeatherType::WEATHER_UNDERWATER && CWeather::ForcedWeatherType < eWeatherType::WEATHER_UNDERWATER)
+	if (CTimeCycle::m_bExtraColourOn == 0 && CWeather::OldWeatherType < eWeatherType::WEATHER_UNDERWATER && CWeather::NewWeatherType < eWeatherType::WEATHER_UNDERWATER && CWeather::ForcedWeatherType < eWeatherType::WEATHER_UNDERWATER)
 	{
 		if (!processedFirst)
 		{
 			lg << "Rendering OK." << endl;
 			lg.flush();
+			inCityFactor = (CWeather::WeatherRegion == eWeatherRegion::WEATHER_REGION_DEFAULT || CWeather::WeatherRegion == eWeatherRegion::WEATHER_REGION_DESERT) ? 0.0f : 1.0f;
 			processedFirst = true;
 		}
 
@@ -242,15 +244,26 @@ void RenderSkybox()
 			skyboxes[i]->inUse = false; // reset flag
 		}
 
+		// Consider in city
+		if (CWeather::WeatherRegion == eWeatherRegion::WEATHER_REGION_DEFAULT || CWeather::WeatherRegion == eWeatherRegion::WEATHER_REGION_DESERT)
+		{
+			inCityFactor -= 0.001f * CTimer::ms_fTimeStep;
+			if (inCityFactor < 0.0f) inCityFactor = 0.0f;
+		}
+		else
+		{
+			inCityFactor += 0.001f * CTimer::ms_fTimeStep;
+			if (inCityFactor > 1.0f) inCityFactor = 1.0f;
+		}
+
 		// Get stars alpha
 		float starsAlpha = 0.0f;
 		if (dayNightBalance > 0.0f)
 		{
 			float skyIllumination = (currentSkyBottomRed + currentSkyBottomGreen + currentSkyBottomBlue + currentSkyTopRed + currentSkyTopGreen + currentSkyTopBlue) / 255.0f;
 			if (skyIllumination > 1.0f) skyIllumination = 1.0f;
-			starsAlpha = (1.0 - skyIllumination) * dayNightBalance;
-			if (CWeather::OldWeatherType < 13) starsAlpha -= (oldAlpha / 255.0f) * starsCityAlphaRemove;
-			if (CWeather::NewWeatherType < 13) starsAlpha -= (newAlpha / 255.0f) * starsCityAlphaRemove;
+			starsAlpha = (1.0f - skyIllumination) * dayNightBalance;
+			starsAlpha -= 1.0f * (inCityFactor * (starsCityAlphaRemove / 2.0f));
 		}
 
 		// Next weather texture is different from current?
@@ -264,15 +277,15 @@ void RenderSkybox()
 		// Process rotation
 		if (CCheat::m_aCheatsActive[0xB]) // fast clock
 		{
-			skyboxes[CWeather::OldWeatherType]->rot += 0.1f * (CTimer::ms_fTimeStep * 1.666667f);
-			if (newTexIsDifferent) skyboxes[CWeather::NewWeatherType]->rot += (0.1f * 0.7f) * (CTimer::ms_fTimeStep * 1.666667f);
-			skyboxes[WEATHER_FOR_STARS]->rot += 0.005f * (CTimer::ms_fTimeStep * 1.666667f);
+			skyboxes[CWeather::OldWeatherType]->rot += 0.1f * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * 1.666667f);
+			if (newTexIsDifferent) skyboxes[CWeather::NewWeatherType]->rot += (0.1f * 0.7f) * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * 1.666667f);
+			skyboxes[WEATHER_FOR_STARS]->rot += 0.005f * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * 1.666667f);
 		}
 		else
 		{
-			skyboxes[CWeather::OldWeatherType]->rot += (cloudsRotationSpeed * 0.5f) * (CTimer::ms_fTimeStep * 1.666667f);
-			if (newTexIsDifferent) skyboxes[CWeather::NewWeatherType]->rot += (cloudsRotationSpeed * 0.5f * 0.7f) * (CTimer::ms_fTimeStep * 1.666667f);
-			skyboxes[WEATHER_FOR_STARS]->rot += (starsRotationSpeed * 0.5f) * (CTimer::ms_fTimeStep * 1.666667f);
+			skyboxes[CWeather::OldWeatherType]->rot += (cloudsRotationSpeed * 0.5f) * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * 1.666667f);
+			if (newTexIsDifferent) skyboxes[CWeather::NewWeatherType]->rot += (cloudsRotationSpeed * 0.5f * 0.7f) * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * 1.666667f);
+			skyboxes[WEATHER_FOR_STARS]->rot += (starsRotationSpeed * 0.5f) * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * 1.666667f);
 		}
 		while (skyboxes[CWeather::OldWeatherType]->rot > 360.0f) skyboxes[CWeather::OldWeatherType]->rot -= 360.0f;
 		while (skyboxes[CWeather::NewWeatherType]->rot > 360.0f) skyboxes[CWeather::NewWeatherType]->rot -= 360.0f;
@@ -283,9 +296,10 @@ void RenderSkybox()
 		// Get Ilumination
 		float skyboxIllumination = ((currentSkyBottomRed + currentSkyBottomGreen + currentSkyBottomBlue) * cloudsMultBrightness) / 255.0f;
 		if (cloudsMultBrightness > 1.0f) cloudsMultBrightness = 1.0f;
-		float dayNightBalanceMinimized = (1.0 - dayNightBalance);
-		if (dayNightBalanceMinimized < cloudsNightDarkLimit) dayNightBalanceMinimized = cloudsNightDarkLimit;
-		skyboxIllumination *= dayNightBalanceMinimized;
+		cloudsMultBrightness -= (dayNightBalance / 12.0f) * (1.0f - inCityFactor);
+		float dayNightBalanceReverse = (1.0f - dayNightBalance);
+		if (dayNightBalanceReverse < cloudsNightDarkLimit) dayNightBalanceReverse = cloudsNightDarkLimit;
+		skyboxIllumination *= dayNightBalanceReverse;
 		if (skyboxIllumination < cloudsMinBrightness) skyboxIllumination = cloudsMinBrightness;
 		if (skyboxIllumination > 1.0f) skyboxIllumination = 1.0f;
 
@@ -302,18 +316,19 @@ void RenderSkybox()
 			if (sunriseFactor > 0.0f)
 			{
 				sunriseFactor *= cloudsMultSunrise;
-				if (sunHorizonFactor > 0.0f) sunriseFactor += (abs(1.0 - sunHorizonFactor) * (sunHorizonFactor * cloudsCityOrange));
+				if (sunHorizonFactor > 0.0f) sunriseFactor += (abs(1.0f - sunHorizonFactor) * sunHorizonFactor);
 			}
 			else
 			{
 				sunriseFactor = 0.0f;
 			}
 		}
+		sunriseFactor += ((cloudsCityOrange / 4.0f) * inCityFactor) * dayNightBalance;
 
 		RwRGBAReal skyboxColor
 		{
 			skyboxIllumination,
-			(skyboxIllumination - (sunriseFactor / 15.0f)),
+			(skyboxIllumination - (sunriseFactor / 16.0f)),
 			(skyboxIllumination - (sunriseFactor / 10.0f))
 		};
 
@@ -397,7 +412,7 @@ public:
     RealSkybox()
 	{
 		lg.open("RealSkybox.SA.log", fstream::out | fstream::trunc);
-		lg << "RealSkybox v1.2 by Junior_Djjr - MixMods.com.br" << endl;
+		lg << "RealSkybox v1.3 by Junior_Djjr - MixMods.com.br" << endl;
 		lg.flush();
 
 		Events::initScriptsEvent += []
@@ -406,7 +421,6 @@ public:
 
 			if (ini.data.size() > 0)
 			{
-				int i;
 				if (ini.ReadInteger("Game tweaks", "NoLowClouds", 0) == 1) {
 					MakeNOP(0x53E1B4, 5, true); // disable low clouds
 				}
@@ -474,7 +488,7 @@ public:
 
 			updateCurrentTimecycle.after += []
 			{
-				if (CGame::currArea == 0 && CWeather::OldWeatherType < eWeatherType::WEATHER_UNDERWATER && CWeather::NewWeatherType < eWeatherType::WEATHER_UNDERWATER && CWeather::ForcedWeatherType < eWeatherType::WEATHER_UNDERWATER && CWeather::UnderWaterness < 0.4f)
+				if (CTimeCycle::m_bExtraColourOn == 0 && CWeather::OldWeatherType < eWeatherType::WEATHER_UNDERWATER && CWeather::NewWeatherType < eWeatherType::WEATHER_UNDERWATER && CWeather::ForcedWeatherType < eWeatherType::WEATHER_UNDERWATER && CWeather::UnderWaterness < 0.4f)
 				{
 					// Min far clip
 					if (currentFarClip < minFarPlane)
