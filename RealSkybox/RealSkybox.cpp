@@ -412,7 +412,7 @@ public:
     RealSkybox()
 	{
 		lg.open("RealSkybox.SA.log", fstream::out | fstream::trunc);
-		lg << "RealSkybox v1.3 by Junior_Djjr - MixMods.com.br" << endl;
+		lg << "RealSkybox v1.3.1 by Junior_Djjr - MixMods.com.br" << endl;
 		lg.flush();
 
 		Events::initScriptsEvent += []
@@ -454,6 +454,8 @@ public:
 				lg << "ERROR: Fail to read .ini file." << endl;
 				lg.flush();
 			}
+
+			if (processedFirst) return;
 
 
 			// Store skyboxes
