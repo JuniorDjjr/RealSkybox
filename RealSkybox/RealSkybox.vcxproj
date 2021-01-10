@@ -42,13 +42,13 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GTASA Release|Win32'">
-    <OutDir>G:\GTA San Andreas\modloader\Real Skybox</OutDir>
+    <OutDir>G:\GTA San Andreas Remaster\modloader\Real Skybox</OutDir>
     <IntDir>$(ProjectDir).obj\GTASA\Release\</IntDir>
     <TargetName>RealSkybox.SA</TargetName>
     <TargetExt>.asi</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GTASA zDebug|Win32'">
-    <OutDir>E:\Documents\GTA San Andreas RenderHook</OutDir>
+    <OutDir>G:\GTA San Andreas Remaster\modloader\Real Skybox</OutDir>
     <IntDir>$(ProjectDir).obj\GTASA\Debug\</IntDir>
     <TargetName>RealSkybox.SA</TargetName>
     <TargetExt>.asi</TargetExt>

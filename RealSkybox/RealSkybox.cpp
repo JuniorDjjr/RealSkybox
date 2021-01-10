@@ -183,7 +183,7 @@ float cloudsMultSunrise = 2.5f;
 
 void RenderSkybox()
 {
-	if (CTimeCycle::m_bExtraColourOn == 0 && CWeather::OldWeatherType < eWeatherType::WEATHER_UNDERWATER && CWeather::NewWeatherType < eWeatherType::WEATHER_UNDERWATER && CWeather::ForcedWeatherType < eWeatherType::WEATHER_UNDERWATER)
+	if (CTimeCycle::m_bExtraColourOn == 0 && CWeather::OldWeatherType != eWeatherType::WEATHER_UNDERWATER && CWeather::NewWeatherType != eWeatherType::WEATHER_UNDERWATER && CWeather::ForcedWeatherType != eWeatherType::WEATHER_UNDERWATER)
 	{
 		if (!processedFirst)
 		{
@@ -192,6 +192,12 @@ void RenderSkybox()
 			inCityFactor = (CWeather::WeatherRegion == eWeatherRegion::WEATHER_REGION_DEFAULT || CWeather::WeatherRegion == eWeatherRegion::WEATHER_REGION_DESERT) ? 0.0f : 1.0f;
 			processedFirst = true;
 		}
+
+		// Tweak weather type IDs
+		int oldWeatherType = CWeather::OldWeatherType;
+		int newWeatherType = CWeather::NewWeatherType;
+		if (oldWeatherType > eWeatherType::WEATHER_UNDERWATER) oldWeatherType = eWeatherType::WEATHER_SUNNY_LA;
+		if (newWeatherType > eWeatherType::WEATHER_UNDERWATER) newWeatherType = eWeatherType::WEATHER_SUNNY_LA;
 
 		// Decrease increased rot
 		if (increaseRot > 0.0f) {
@@ -278,7 +284,7 @@ void RenderSkybox()
 		}
 
 		// Next weather texture is different from current?
-		bool newTexIsDifferent = (skyboxes[CWeather::OldWeatherType]->tex != skyboxes[CWeather::NewWeatherType]->tex);
+		bool newTexIsDifferent = (skyboxes[oldWeatherType]->tex != skyboxes[newWeatherType]->tex);
 		if (!newTexIsDifferent)
 		{
 			oldAlpha += newAlpha;
@@ -288,26 +294,26 @@ void RenderSkybox()
 		// Process rotation
 		if (CCheat::m_aCheatsActive[0xB]) // fast clock
 		{
-			skyboxes[CWeather::OldWeatherType]->rot += 0.1f + increaseRot * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * magic);
-			if (newTexIsDifferent) skyboxes[CWeather::NewWeatherType]->rot += (0.1f * 0.7f) + increaseRot * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * magic);
+			skyboxes[oldWeatherType]->rot += 0.1f + increaseRot * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * magic);
+			if (newTexIsDifferent) skyboxes[newWeatherType]->rot += (0.1f * 0.7f) + increaseRot * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * magic);
 			skyboxes[WEATHER_FOR_STARS]->rot += 0.005f + increaseRot * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * magic);
 		}
 		else
 		{
-			skyboxes[CWeather::OldWeatherType]->rot += (cloudsRotationSpeed * 0.5f) + increaseRot * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * magic);
-			if (newTexIsDifferent) skyboxes[CWeather::NewWeatherType]->rot += (cloudsRotationSpeed * 0.5f * 0.7f) + increaseRot * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * magic);
+			skyboxes[oldWeatherType]->rot += (cloudsRotationSpeed * 0.5f) + increaseRot * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * magic);
+			if (newTexIsDifferent) skyboxes[newWeatherType]->rot += (cloudsRotationSpeed * 0.5f * 0.7f) + increaseRot * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * magic);
 			skyboxes[WEATHER_FOR_STARS]->rot += (starsRotationSpeed * 0.5f) + increaseRot * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * magic);
 		}
-		while (skyboxes[CWeather::OldWeatherType]->rot > 360.0f) skyboxes[CWeather::OldWeatherType]->rot -= 360.0f;
-		while (skyboxes[CWeather::NewWeatherType]->rot > 360.0f) skyboxes[CWeather::NewWeatherType]->rot -= 360.0f;
+		while (skyboxes[oldWeatherType]->rot > 360.0f) skyboxes[oldWeatherType]->rot -= 360.0f;
+		while (skyboxes[newWeatherType]->rot > 360.0f) skyboxes[newWeatherType]->rot -= 360.0f;
 		while (skyboxes[WEATHER_FOR_STARS]->rot > 360.0f) skyboxes[WEATHER_FOR_STARS]->rot -= 360.0f;
-		SetRotationForThisTexture(skyboxes[CWeather::OldWeatherType]->tex, skyboxes[CWeather::OldWeatherType]->rot);
-		if (newTexIsDifferent) SetRotationForThisTexture(skyboxes[CWeather::NewWeatherType]->tex, skyboxes[CWeather::NewWeatherType]->rot);
+		SetRotationForThisTexture(skyboxes[oldWeatherType]->tex, skyboxes[oldWeatherType]->rot);
+		if (newTexIsDifferent) SetRotationForThisTexture(skyboxes[newWeatherType]->tex, skyboxes[newWeatherType]->rot);
 
 		// Get Ilumination
 		float skyboxIllumination = ((currentSkyBottomRed + currentSkyBottomGreen + currentSkyBottomBlue) * cloudsMultBrightness) / 255.0f;
-		if (cloudsMultBrightness > 1.0f) cloudsMultBrightness = 1.0f;
-		if (dayNightBalance != 0.0f && inCityFactor != 0.0f) cloudsMultBrightness -= (dayNightBalance / 12.0f) * (1.0f - inCityFactor);
+		if (skyboxIllumination > 1.0f) skyboxIllumination = 1.0f;
+		if (dayNightBalance != 0.0f && inCityFactor != 0.0f) skyboxIllumination -= (dayNightBalance / 12.0f) * (1.0f - inCityFactor);
 		float dayNightBalanceReverse = (1.0f - dayNightBalance);
 		if (dayNightBalanceReverse < cloudsNightDarkLimit) dayNightBalanceReverse = cloudsNightDarkLimit;
 		skyboxIllumination *= dayNightBalanceReverse;
@@ -322,8 +328,8 @@ void RenderSkybox()
 			if (sunHorizonFactor > 0.2f) sunHorizonFactor -= (sunHorizonFactor - 0.2f) * 2.0f; // 0.0 - 0.2 - 0.0
 			sunriseFactor = sunHorizonFactor * 10.0f;
 			if (sunriseFactor > 1.0f) sunriseFactor = 1.0f;
-			if (NoSunriseWeather((eWeatherType)CWeather::OldWeatherType)) sunriseFactor -= (oldAlpha / 255.0f);
-			if (NoSunriseWeather((eWeatherType)CWeather::NewWeatherType)) sunriseFactor -= (newAlpha / 255.0f);
+			if (NoSunriseWeather((eWeatherType)oldWeatherType)) sunriseFactor -= (oldAlpha / 255.0f);
+			if (NoSunriseWeather((eWeatherType)newWeatherType)) sunriseFactor -= (newAlpha / 255.0f);
 			if (sunriseFactor > 0.0f)
 			{
 				sunriseFactor *= cloudsMultSunrise;
@@ -370,15 +376,15 @@ void RenderSkybox()
 			CVisibilityPlugins::RenderAlphaAtomic(skyAtomic, finalAlpha);
 		}
 
-		if (skyboxes[CWeather::OldWeatherType]->tex && oldAlpha > 0.0f) // Old (current)
+		if (skyboxes[oldWeatherType]->tex && oldAlpha > 0.0f) // Old (current)
 		{
 			RwFrameTranslate(skyFrame, &camPos->ToRwV3d(), rwCOMBINEREPLACE);
 			RwFrameScale(skyFrame, &oldSkyboxScale, rwCOMBINEPRECONCAT);
-			RwFrameRotate(skyFrame, (RwV3d*)0x008D2E18, skyboxes[CWeather::OldWeatherType]->rot, rwCOMBINEPRECONCAT);
+			RwFrameRotate(skyFrame, (RwV3d*)0x008D2E18, skyboxes[oldWeatherType]->rot, rwCOMBINEPRECONCAT);
 			RwFrameUpdateObjects(skyFrame);
 
-			skyAtomic->geometry->matList.materials[0]->texture = skyboxes[CWeather::OldWeatherType]->tex;
-			SetInUseForThisTexture(skyboxes[CWeather::OldWeatherType]->tex);
+			skyAtomic->geometry->matList.materials[0]->texture = skyboxes[oldWeatherType]->tex;
+			SetInUseForThisTexture(skyboxes[oldWeatherType]->tex);
 
 			int finalAlpha = (int)oldAlpha;
 			if (skyboxFogType <= 1 && CWeather::UnderWaterness > 0.4f) finalAlpha /= 1.0f + ((CWeather::UnderWaterness - 0.4f) * 100.0f);
@@ -390,15 +396,15 @@ void RenderSkybox()
 			CVisibilityPlugins::RenderAlphaAtomic(skyAtomic, finalAlpha);
 		}
 
-		if (newTexIsDifferent && skyboxes[CWeather::NewWeatherType]->tex && newAlpha > 0.0f) // New (next)
+		if (newTexIsDifferent && skyboxes[newWeatherType]->tex && newAlpha > 0.0f) // New (next)
 		{
 			RwFrameTranslate(skyFrame, &camPos->ToRwV3d(), rwCOMBINEREPLACE);
 			RwFrameScale(skyFrame, &newSkyboxScale, rwCOMBINEPRECONCAT);
-			RwFrameRotate(skyFrame, (RwV3d*)0x008D2E18, skyboxes[CWeather::NewWeatherType]->rot, rwCOMBINEPRECONCAT);
+			RwFrameRotate(skyFrame, (RwV3d*)0x008D2E18, skyboxes[newWeatherType]->rot, rwCOMBINEPRECONCAT);
 			RwFrameUpdateObjects(skyFrame);
 
-			skyAtomic->geometry->matList.materials[0]->texture = skyboxes[CWeather::NewWeatherType]->tex;
-			SetInUseForThisTexture(skyboxes[CWeather::NewWeatherType]->tex);
+			skyAtomic->geometry->matList.materials[0]->texture = skyboxes[newWeatherType]->tex;
+			SetInUseForThisTexture(skyboxes[newWeatherType]->tex);
 
 			int finalAlpha = (int)newAlpha;
 			if (skyboxFogType <= 1 && CWeather::UnderWaterness > 0.4f) finalAlpha /= 1.0f + ((CWeather::UnderWaterness - 0.4f) * 100.0f);
@@ -501,7 +507,7 @@ public:
 
 			updateCurrentTimecycle.after += []
 			{
-				if (CTimeCycle::m_bExtraColourOn == 0 && CWeather::OldWeatherType < eWeatherType::WEATHER_UNDERWATER && CWeather::NewWeatherType < eWeatherType::WEATHER_UNDERWATER && CWeather::ForcedWeatherType < eWeatherType::WEATHER_UNDERWATER && CWeather::UnderWaterness < 0.4f)
+				if (CTimeCycle::m_bExtraColourOn == 0 && CWeather::OldWeatherType != eWeatherType::WEATHER_UNDERWATER && CWeather::NewWeatherType != eWeatherType::WEATHER_UNDERWATER && CWeather::ForcedWeatherType != eWeatherType::WEATHER_UNDERWATER && CWeather::UnderWaterness < 0.4f)
 				{
 					// Min far clip
 					if (currentFarClip < minFarPlane)
@@ -526,14 +532,19 @@ public:
 				// Set instantly, i.e. saving, wasted, busted, any situation where the game changes the time during a transition.
 				if (TheCamera.m_fFadeAlpha > 200.0f)
 				{
+					int oldWeatherType = CWeather::OldWeatherType;
+					int newWeatherType = CWeather::NewWeatherType;
+					if (oldWeatherType > eWeatherType::WEATHER_UNDERWATER) oldWeatherType = eWeatherType::WEATHER_SUNNY_LA;
+					if (newWeatherType > eWeatherType::WEATHER_UNDERWATER) newWeatherType = eWeatherType::WEATHER_SUNNY_LA;
+
 					float fTime = log10((float)time) * 2.0f * CTimer::ms_fTimeStep * magic;
-					skyboxes[CWeather::OldWeatherType]->rot += 0.1f + fTime * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * magic);
-					skyboxes[CWeather::NewWeatherType]->rot += (0.1f * 0.7f) + fTime * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * magic);
+					skyboxes[oldWeatherType]->rot += 0.1f + fTime * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * magic);
+					skyboxes[newWeatherType]->rot += (0.1f * 0.7f) + fTime * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * magic);
 					skyboxes[WEATHER_FOR_STARS]->rot += 0.005f + fTime * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * magic);
 				}
 				else
 				{
-					if (CTimeCycle::m_bExtraColourOn == 0 && CWeather::OldWeatherType < eWeatherType::WEATHER_UNDERWATER && CWeather::NewWeatherType < eWeatherType::WEATHER_UNDERWATER && CWeather::ForcedWeatherType < eWeatherType::WEATHER_UNDERWATER) {
+					if (CTimeCycle::m_bExtraColourOn == 0 && CWeather::OldWeatherType != eWeatherType::WEATHER_UNDERWATER && CWeather::NewWeatherType != eWeatherType::WEATHER_UNDERWATER && CWeather::ForcedWeatherType != eWeatherType::WEATHER_UNDERWATER) {
 						float fTime = log10((float)time) * CTimer::ms_fTimeStep * magic;
 
 						float increaseLimitMin = 0.1f * CTimer::ms_fTimeStep * magic;
