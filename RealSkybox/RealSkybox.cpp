@@ -429,7 +429,7 @@ public:
     RealSkybox()
 	{
 		lg.open("RealSkybox.SA.log", fstream::out | fstream::trunc);
-		lg << "RealSkybox v1.3.2 by Junior_Djjr - MixMods.com.br" << endl;
+		lg << "RealSkybox v1.3.3 by Junior_Djjr - MixMods.com.br" << endl;
 		lg.flush();
 
 		Events::initScriptsEvent += []
