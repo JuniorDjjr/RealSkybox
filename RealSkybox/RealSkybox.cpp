@@ -57,8 +57,7 @@ RwV3d cloudsRotationVector;
 RwV3d starsRotationVector;
 
 bool ReadSettingsFile() {
-	lg << "Reading settings...\n";
-	lg.flush();
+	lg << "Reading settings..." << endl;
 	int read = 0;
 	ifstream stream("realskybox/skyboxes.dat");
 	for (string line; getline(stream, line); ) {
@@ -67,8 +66,7 @@ bool ReadSettingsFile() {
 			if (line.compare("skytexs") == 0) {
 				int weatherId = 0;
 				char textureName[32];
-				lg << "Reading skytexs...\n";
-				lg.flush();
+				lg << "Reading skytexs..." << endl;
 				while (getline(stream, line) && line.compare("end")) {
 					if (line[0] != ';' && line[0] != '#') {
 						if (sscanf(line.c_str(), "%d, %s", &weatherId, &textureName) == 2 && weatherId <= WEATHER_FOR_STARS)
@@ -79,16 +77,14 @@ bool ReadSettingsFile() {
 						}
 						else
 						{
-							lg << "'" << line << "' ---------- NOT VALID\n";
-							lg.flush();
+							lg << "'" << line << "' ---------- NOT VALID" << endl;
 						}
 					}
 				}
 			}
 		}
 	}
-	lg << "Done reading settings.\n";
-	lg.flush();
+	lg << "Done reading settings." << endl;
 	return (read > 0);
 }
 
@@ -123,7 +119,6 @@ static void StoreSkyboxModel()
 	}
 	else lg << "Error: Can't open " << fileName << endl;
 	RwStreamClose(stream, 0);
-	lg.flush();
 }
 
 void SetInUseForThisTexture(RwTexture *tex)
@@ -187,8 +182,7 @@ void RenderSkybox()
 	{
 		if (!processedFirst)
 		{
-			lg << "Rendering OK.\n";
-			lg.flush();
+			lg << "Rendering OK." << endl;
 			inCityFactor = (CWeather::WeatherRegion == eWeatherRegion::WEATHER_REGION_DEFAULT || CWeather::WeatherRegion == eWeatherRegion::WEATHER_REGION_DESERT) ? 0.0f : 1.0f;
 			processedFirst = true;
 		}
@@ -201,7 +195,7 @@ void RenderSkybox()
 
 		// Decrease increased rot
 		if (increaseRot > 0.0f) {
-			increaseRot -= pow(0.07f, 2) * CTimer::ms_fTimeStep * magic;
+			increaseRot -= pow(0.08f, 2) * CTimer::ms_fTimeStep * magic;
 			if (increaseRot < 0.0f) increaseRot = 0.0f;
 		}
 
@@ -242,7 +236,7 @@ void RenderSkybox()
 		float dayNightBalance = GetDayNightBalance();
 
 		// Get position
-		CVector *camPos = &TheCamera.GetPosition();
+		RwV3d camPos = TheCamera.GetPosition().ToRwV3d();
 
 		// Set random rotation to skyboxes not in use
 		for (int i = 0; i <= eWeatherType::WEATHER_UNDERWATER; ++i)
@@ -358,7 +352,7 @@ void RenderSkybox()
 		// Render skyboxes
 		if (starsAlpha > 0.0f) // Stars
 		{
-			RwFrameTranslate(skyFrame, &camPos->ToRwV3d(), rwCOMBINEREPLACE);
+			RwFrameTranslate(skyFrame, &camPos, rwCOMBINEREPLACE);
 			RwFrameScale(skyFrame, &starsSkyboxScale, rwCOMBINEPRECONCAT);
 			RwFrameRotate(skyFrame, (RwV3d*)0x008D2E18, skyboxes[WEATHER_FOR_STARS]->rot, rwCOMBINEPRECONCAT);
 			RwFrameUpdateObjects(skyFrame);
@@ -378,7 +372,7 @@ void RenderSkybox()
 
 		if (skyboxes[oldWeatherType]->tex && oldAlpha > 0.0f) // Old (current)
 		{
-			RwFrameTranslate(skyFrame, &camPos->ToRwV3d(), rwCOMBINEREPLACE);
+			RwFrameTranslate(skyFrame, &camPos, rwCOMBINEREPLACE);
 			RwFrameScale(skyFrame, &oldSkyboxScale, rwCOMBINEPRECONCAT);
 			RwFrameRotate(skyFrame, (RwV3d*)0x008D2E18, skyboxes[oldWeatherType]->rot, rwCOMBINEPRECONCAT);
 			RwFrameUpdateObjects(skyFrame);
@@ -398,7 +392,7 @@ void RenderSkybox()
 
 		if (newTexIsDifferent && skyboxes[newWeatherType]->tex && newAlpha > 0.0f) // New (next)
 		{
-			RwFrameTranslate(skyFrame, &camPos->ToRwV3d(), rwCOMBINEREPLACE);
+			RwFrameTranslate(skyFrame, &camPos, rwCOMBINEREPLACE);
 			RwFrameScale(skyFrame, &newSkyboxScale, rwCOMBINEPRECONCAT);
 			RwFrameRotate(skyFrame, (RwV3d*)0x008D2E18, skyboxes[newWeatherType]->rot, rwCOMBINEPRECONCAT);
 			RwFrameUpdateObjects(skyFrame);
@@ -429,8 +423,7 @@ public:
     RealSkybox()
 	{
 		lg.open("RealSkybox.SA.log", fstream::out | fstream::trunc);
-		lg << "RealSkybox v1.3.3 by Junior_Djjr - MixMods.com.br" << endl;
-		lg.flush();
+		lg << "RealSkybox v1.3.4 by Junior_Djjr - MixMods.com.br" << endl;
 
 		Events::initScriptsEvent += []
 		{
@@ -468,8 +461,7 @@ public:
 			}
 			else
 			{
-				lg << "ERROR: Fail to read .ini file.\n";
-				lg.flush();
+				lg << "ERROR: Fail to read .ini file." << endl;
 			}
 
 			if (processedFirst) return;
@@ -485,8 +477,7 @@ public:
 			if (!ReadSettingsFile())
 			{
 				CTxdStore::PopCurrentTxd();
-				lg << "ERROR: Fail to read .dat file.\n";
-				lg.flush();
+				lg << "ERROR: Fail to read .dat file." << endl;
 				return;
 			}
 			CTxdStore::PopCurrentTxd();
@@ -494,7 +485,6 @@ public:
 			sunReflectionChanged = (ReadMemory<uint32_t>(0x6FC051 + 2, true) > 28800) ? true : false;
 
 			lg << "Load done" << endl;
-			lg.flush();
 
 			if (skyboxDrawAfter)
 			{
@@ -523,36 +513,38 @@ public:
 				}
 			};
 
-			injector::MakeInline<0x4414DA, 0x4414DA + 7>([](injector::reg_pack& regs)
+			// void __cdecl CGameLogic::PassTime(unsigned int a1)
+			injector::MakeInline<0x4414C5, 0x4414C5 + 7>([](injector::reg_pack& regs)
 			{
-				regs.edi = CClock::CurrentDay;
+				//movzx   ebp, _ZN6CClock18ms_nGameClockHoursE ; CClock::ms_nGameClockHours
+				regs.ebp = CClock::ms_nGameClockHours;
 
 				int time = regs.ecx;
 
 				// Set instantly, i.e. saving, wasted, busted, any situation where the game changes the time during a transition.
-				if (TheCamera.m_fFadeAlpha > 200.0f)
+				if (TheCamera.m_fFadeAlpha > 160.0f)
 				{
 					int oldWeatherType = CWeather::OldWeatherType;
 					int newWeatherType = CWeather::NewWeatherType;
 					if (oldWeatherType > eWeatherType::WEATHER_UNDERWATER) oldWeatherType = eWeatherType::WEATHER_SUNNY_LA;
 					if (newWeatherType > eWeatherType::WEATHER_UNDERWATER) newWeatherType = eWeatherType::WEATHER_SUNNY_LA;
 
-					float fTime = log10((float)time) * 2.0f * CTimer::ms_fTimeStep * magic;
-					skyboxes[oldWeatherType]->rot += 0.1f + fTime * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * magic);
-					skyboxes[newWeatherType]->rot += (0.1f * 0.7f) + fTime * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * magic);
-					skyboxes[WEATHER_FOR_STARS]->rot += 0.005f + fTime * CTimer::ms_fTimeScale * (CTimer::ms_fTimeStep * magic);
+					float fTime = log10((float)time) * 100.0f;
+					skyboxes[oldWeatherType]->rot += (0.1f + fTime) * (CTimer::ms_fTimeStep * magic);
+					skyboxes[newWeatherType]->rot += ((0.1f * 0.7f) + fTime) * (CTimer::ms_fTimeStep * magic);
+					skyboxes[WEATHER_FOR_STARS]->rot += (0.005f + fTime) * (CTimer::ms_fTimeStep * magic);
 				}
 				else
 				{
 					if (CTimeCycle::m_bExtraColourOn == 0 && CWeather::OldWeatherType != eWeatherType::WEATHER_UNDERWATER && CWeather::NewWeatherType != eWeatherType::WEATHER_UNDERWATER && CWeather::ForcedWeatherType != eWeatherType::WEATHER_UNDERWATER) {
-						float fTime = log10((float)time) * CTimer::ms_fTimeStep * magic;
+						float fTime = log10((float)time) * (CTimer::ms_fTimeStep * magic);
 
-						float increaseLimitMin = 0.1f * CTimer::ms_fTimeStep * magic;
+						float increaseLimitMin = 0.1f * (CTimer::ms_fTimeStep * magic);
 						if (fTime < increaseLimitMin) fTime = increaseLimitMin;
 
 						increaseRot += fTime;
 
-						float increaseLimitMax = fTime * 0.5f * CTimer::ms_fTimeStep * magic;
+						float increaseLimitMax = fTime * 0.5f * (CTimer::ms_fTimeStep * magic);
 						if (increaseRot > increaseLimitMax) increaseRot = increaseLimitMax;
 					}
 				}
